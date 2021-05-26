@@ -11,6 +11,7 @@ var commands = map[string]func(){
 	"fmt":              fmtCommand,
 	"get":              getCommand,
 	"init":             initCommand,
+	"ip":               ipCommand,
 	"space":            spaceCommand,
 	"validate":         validateCommand,
 	"version":          versionCommand,
