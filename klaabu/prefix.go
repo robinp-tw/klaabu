@@ -79,16 +79,16 @@ func (p *Prefix) PrefixById(id string) *Prefix {
 	return nil
 }
 
-// SearchIp find the most specific prefix that contains the given IP address.
+// SearchNet find the most specific prefix that contains the given IP address.
 // It returns the list of aliases for that prefix.
-func (p *Prefix) SearchIp(ip net.IP) []string {
+func (p *Prefix) SearchNet(needle *net.IPNet) []string {
 	//log.Print(p)
 	_, ipnet, err := net.ParseCIDR(string(p.Cidr))
 	if err != nil {
 		return []string{"err"}
 	}
 	//log.Print(ipnet)
-	if ipnet.Contains(ip) {
+	if iputil.NetContainsNet(ipnet, needle) {
 		// If there are no children, or none contains the ip, return this prefix.
 		// If there are children, with exactly one containing the ip, recurse.
 		// If multiple contains the ip (which is odd-ish, except range whatever), stop here and return all.
@@ -98,7 +98,7 @@ func (p *Prefix) SearchIp(ip net.IP) []string {
 			if err != nil {
 				return []string{"errr"}
 			}
-			if cnet.Contains(ip) {
+			if iputil.NetContainsNet(cnet, needle) {
 				cs = append(cs, child)
 			}
 		}
@@ -106,7 +106,7 @@ func (p *Prefix) SearchIp(ip net.IP) []string {
 			return p.Aliases
 		}
 		if len(cs) == 1 {
-			return cs[0].SearchIp(ip)
+			return cs[0].SearchNet(needle)
 		}
 		return []string{"TODO multiple"}
 	}

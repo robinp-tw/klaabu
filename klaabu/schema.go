@@ -26,8 +26,8 @@ func (s *Schema) PrefixById(id string) *Prefix {
 	return s.Root.PrefixById(id)
 }
 
-func (s *Schema) SearchIp(ip net.IP) []string {
-	return s.Root.SearchIp(ip)
+func (s *Schema) SearchNet(ipnet *net.IPNet) []string {
+	return s.Root.SearchNet(ipnet)
 }
 
 // Validate checks if you are stupid or not.

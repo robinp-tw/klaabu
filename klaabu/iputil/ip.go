@@ -1,6 +1,7 @@
 package iputil
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -30,14 +31,26 @@ func MinMaxIP(cidr string) (net.IP, net.IP, error) {
 		return nil, nil, fmt.Errorf("error while parsing your CIDR %v with error: %s", cidr, err)
 	}
 
-	min := make([]byte, len(ipNet.IP))
-	max := make([]byte, len(ipNet.IP))
-	for i := range ipNet.IP {
-		min[i] = ipNet.Mask[i] & ipNet.IP[i]
-		max[i] = ipNet.Mask[i]&ipNet.IP[i] | ^ipNet.Mask[i]
-	}
+	min := NetworkIP(ipNet)
+	max := BroadcastIP(ipNet)
 
 	return min, max, nil
+}
+
+func NetworkIP(ipNet *net.IPNet) net.IP {
+	res := make([]byte, len(ipNet.IP))
+	for i := range ipNet.IP {
+		res[i] = ipNet.Mask[i] & ipNet.IP[i]
+	}
+	return res
+}
+
+func BroadcastIP(ipNet *net.IPNet) net.IP {
+	res := make([]byte, len(ipNet.IP))
+	for i := range ipNet.IP {
+		res[i] = ipNet.Mask[i]&ipNet.IP[i] | ^ipNet.Mask[i]
+	}
+	return res
 }
 
 func NextIP(ip net.IP) (net.IP, error) {
@@ -86,4 +99,10 @@ func CloneIP(ip net.IP) net.IP {
 	}
 
 	return result
+}
+
+// NetContainsNet is true if a contains b completely.
+func NetContainsNet(a, b *net.IPNet) bool {
+	// Based on https://github.com/google/ipaddr-py/blob/master/ipaddr.py#L648
+	return bytes.Compare(NetworkIP(a), NetworkIP(b)) <= 0 && bytes.Compare(BroadcastIP(a), BroadcastIP(b)) >= 0
 }

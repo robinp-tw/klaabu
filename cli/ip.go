@@ -13,10 +13,8 @@ func ipCommand() {
 	schemaFileName := get.String("schema", "schema.kml", "(Optional) Schema file path (defaults to ./schema.kml)")
 	err := get.Parse(os.Args[2:])
 
-	rawIp := get.Arg(0)
-
 	if err != nil || len(os.Args) < 3 {
-		log.Printf("Usage: klaabu ip [OPTIONS] IP_ADDRESS \n\n Subcommands: \n")
+		log.Printf("Usage: klaabu ip [OPTIONS] CIDR \n\n Subcommands: \n")
 		get.PrintDefaults()
 		os.Exit(1)
 	}
@@ -26,11 +24,12 @@ func ipCommand() {
 		log.Fatalln(err)
 	}
 
-	ip := net.ParseIP(rawIp)
-	if ip == nil {
-		log.Fatalf("Couldn't parse ip.")
+	rawIpNet := get.Arg(0)
+	_, ipnet, err := net.ParseCIDR(rawIpNet)
+	if err != nil {
+		log.Fatalf("Couldn't parse CIDR. For raw IPv4, stick /32 after? Error: %v", err)
 	}
 
-	matches := schema.SearchIp(ip)
+	matches := schema.SearchNet(ipnet)
 	log.Println(matches)
 }
