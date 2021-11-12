@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 )
 
 // Schema is the Klaabu schema.
@@ -23,6 +24,10 @@ func NewSchema(labels map[string]string) *Schema {
 
 func (s *Schema) PrefixById(id string) *Prefix {
 	return s.Root.PrefixById(id)
+}
+
+func (s *Schema) SearchNet(ipnet *net.IPNet) []string {
+	return s.Root.SearchNet(ipnet)
 }
 
 // Validate checks if you are stupid or not.

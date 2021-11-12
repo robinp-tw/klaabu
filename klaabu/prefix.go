@@ -3,6 +3,8 @@ package klaabu
 import (
 	"fmt"
 	"github.com/erikkn/klaabu/klaabu/iputil"
+	//"log"
+	"net"
 	"sort"
 )
 
@@ -75,6 +77,40 @@ func (p *Prefix) PrefixById(id string) *Prefix {
 	}
 
 	return nil
+}
+
+// SearchNet find the most specific prefix that contains the given IP address.
+// It returns the list of aliases for that prefix.
+func (p *Prefix) SearchNet(needle *net.IPNet) []string {
+	//log.Print(p)
+	_, ipnet, err := net.ParseCIDR(string(p.Cidr))
+	if err != nil {
+		return []string{"err"}
+	}
+	//log.Print(ipnet)
+	if iputil.NetContainsNet(ipnet, needle) {
+		// If there are no children, or none contains the ip, return this prefix.
+		// If there are children, with exactly one containing the ip, recurse.
+		// If multiple contains the ip (which is odd-ish, except range whatever), stop here and return all.
+		cs := []*Prefix{}
+		for _, child := range p.Children {
+			_, cnet, err := net.ParseCIDR(string(child.Cidr))
+			if err != nil {
+				return []string{"errr"}
+			}
+			if iputil.NetContainsNet(cnet, needle) {
+				cs = append(cs, child)
+			}
+		}
+		if len(cs) == 0 {
+			return p.Aliases
+		}
+		if len(cs) == 1 {
+			return cs[0].SearchNet(needle)
+		}
+		return []string{"TODO multiple"}
+	}
+	return []string{"not-found"}
 }
 
 // FindPrefixesByLabelNamesValues fetches every Prefix that has all the 'key' and 'value' label pairs set that are passed through 'l'. Every item of slice 'l' contains a key&value pair following the 'key=value' notation. This Function starts traversing down the tree from whatever value 'c' is.
